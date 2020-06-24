@@ -5,42 +5,24 @@
  */
 
 function cloneDeep(value) {
-  // 记录被拷贝的值，避免循环引用的出现
-  let memo = {}
-  return baseClone(value, memo)
-}
-
-function baseClone(value, memo) {
-  var result = value
-  // 无效值
-  if (!value) return result
-  // 非对象且非数组
-  var isObj = isObject(value)
-  var isArr = Array.isArray(value)
-  if (!isObj && !isArr) return result
-  if (isArr) {
-    // 数组
-    result = [...value]
-  } else {
-    // 对象
-    result = {...value}
-  }
-  Reflect.ownKeys(result).forEach(key => {
-    const item = result[key]
-    // 引用类型，递归拷贝
-    if (typeof item === 'object' && item !== null) {
-      // 录已经被拷贝过的引用地址
-      if (memo[item]) {
-        item = memo[item]
-      } else {
-        memo[item] = item
-        item = baseClone(item)
-      }
+  let result = {}
+  const types = [Date, RegExp, Set, Map, WeakMap, WeakSet] // 特殊类型
+  Object.keys(value).forEach(key => {
+    if (types.includes(value[key].constructor)) {
+      // 特殊类型防丢失
+      result[key] = new value[key].constructor(value[key])
+    } else if (typeof value[key] === 'object') {
+      // 引用类型需要递归
+      result[key] = cloneDeep(value[key])
+    } else {
+      result[key] = value[key]
     }
   })
   return result
 }
 
-function isObject(value) {
-  return Object.prototype.toString.call(value) === '[Object Object]'
-}
+var obj = { r: /a/, d: new Date() }
+
+var obj2 = cloneDeep(obj)
+
+console.log(obj2)
